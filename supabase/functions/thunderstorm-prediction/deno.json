@@ -1,0 +1,12 @@
+{
+  "tasks": {
+    "dev": "deno run --watch --allow-net --allow-env index.ts",
+    "deploy": "deployctl deploy --project=thunderstorm-prediction --prod index.ts"
+  },
+  "compilerOptions": {
+    "allowJs": true,
+    "lib": ["deno.window", "deno.ns", "dom"],
+    "strict": true,
+    "target": "esnext"
+  }
+}

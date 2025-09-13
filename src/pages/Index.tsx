@@ -18,6 +18,7 @@ import { UserProfile } from '@/components/UserProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { toast } from '@/hooks/use-toast';
+import ThunderstormPredictor from '@/components/ThunderstormPredictor';
 import { useNavigate } from 'react-router-dom';
 
 const API_KEY = '5EQZDJIyPYQJhIuKIgctgnKIwIk11eG7'; // Replace this with your actual OpenWeatherMap API key
@@ -148,12 +149,33 @@ const Index = () => {
         });
 
         const { latitude, longitude } = position.coords;
-        weatherResponse = await fetch(
+        
+        // Function to handle fetch with retry
+        const fetchWithRetry = async (url: string, retries = 3, delay = 2000) => {
+          for (let i = 0; i < retries; i++) {
+            try {
+              const response = await fetch(url);
+              if (response.ok) return response;
+              if (response.status === 429) {
+                // Rate limit hit, wait before retrying
+                await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+                continue;
+              }
+              throw new Error(`HTTP error! status: ${response.status}`);
+            } catch (error) {
+              if (i === retries - 1) throw error;
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+          throw new Error('Max retries reached');
+        };
+
+        weatherResponse = await fetchWithRetry(
           `https://api.tomorrow.io/v4/weather/realtime?location=${latitude},${longitude}&apikey=${API_KEY}&units=metric`
         );
 
         // Forecast weather
-        forecastResponse = await fetch(
+        forecastResponse = await fetchWithRetry(
           `https://api.tomorrow.io/v4/weather/forecast?location=${latitude},${longitude}&apikey=${API_KEY}&units=metric&fields=precipitationProbability,weatherCode,temperature,windSpeed`
         );
       }
@@ -656,6 +678,11 @@ const Index = () => {
                     weatherData={weatherData}
                     formatTemp={formatTemp}
                   />
+                </div>
+
+                {/* Thunderstorm Prediction */}
+                <div className="mb-8">
+                  <ThunderstormPredictor />
                 </div>
 
                 {/* 5-Day Forecast */}

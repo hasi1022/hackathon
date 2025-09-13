@@ -1,0 +1,6 @@
+# Python dependencies for ML model
+scikit-learn
+pandas==2.1.0
+numpy==1.24.3
+requests==2.31.0
+joblib==1.3.2
